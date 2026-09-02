@@ -45,7 +45,7 @@
         }
 
         .app-wrapper {
-            display: flex;
+            display: none; /* shown by JS once logged in */
             gap: 25px;
             max-width: 950px;
             width: 100%;
@@ -54,6 +54,117 @@
             position: relative;
             z-index: 1;
         }
+
+        /* --- AUTH SCREEN --- */
+        .auth-screen {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 380px;
+            margin: 100px auto;
+            background-color: var(--white);
+            border-radius: 25px;
+            padding: 35px 30px;
+            box-shadow: 0 15px 35px rgba(43, 147, 72, 0.2);
+            border: 3px solid var(--pink-accent);
+            text-align: center;
+        }
+
+        .auth-screen h1 {
+            color: var(--pink-accent);
+            font-size: 1.9rem;
+            margin-top: 0;
+        }
+
+        .auth-screen input[type="email"],
+        .auth-screen input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border: 2px solid var(--mint-bg);
+            border-radius: 15px;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .auth-screen input:focus { border-color: var(--rind-green); }
+
+        .auth-submit-btn {
+            width: 100%;
+            background-color: var(--rind-green);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 4px;
+        }
+        .auth-submit-btn:hover { background-color: #1e7033; }
+        .auth-submit-btn:active { transform: scale(0.98); }
+
+        .auth-toggle {
+            margin-top: 18px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .auth-toggle a {
+            color: var(--pink-accent);
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .auth-toggle a:hover { text-decoration: underline; }
+
+        .auth-error {
+            color: #d63447;
+            font-size: 0.88rem;
+            font-weight: 700;
+            min-height: 18px;
+            margin-bottom: 8px;
+        }
+
+        .auth-loading {
+            text-align: center;
+            padding-top: 120px;
+            font-weight: 800;
+            color: var(--rind-green);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Logout button + user email pill */
+        .account-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: -10px;
+            padding-top: 5px;
+        }
+        .account-email {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e7033;
+            background-color: var(--rind-light);
+            padding: 5px 12px;
+            border-radius: 12px;
+        }
+        .logout-btn {
+            background-color: var(--light-pink);
+            color: var(--pink-accent);
+            border: 2px solid var(--pink-accent);
+            padding: 5px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .logout-btn:hover { background-color: var(--pink-accent); color: var(--white); }
 
         /* --- SIDEBAR CALENDAR STYLES --- */
         .sidebar {
@@ -132,7 +243,6 @@
             background-color: var(--light-pink);
         }
 
-        /* Highlight the day currently being viewed */
         .calendar-day.active {
             background-color: var(--pink-accent);
             color: var(--white);
@@ -162,7 +272,6 @@
             transform: rotate(45deg);
         }
 
-        /* Make dots white if they are on an active pink background */
         .calendar-day.active .cal-task-dot {
             background-color: var(--white);
         }
@@ -202,7 +311,6 @@
             font-weight: 800;
         }
 
-        /* Back to General Button */
         .back-btn-container {
             display: none;
             text-align: center;
@@ -342,6 +450,14 @@
         .action-btn { background-color: transparent; color: #999; padding: 5px 8px; font-size: 1.1rem; margin-left: 5px; border: none; cursor: pointer; }
         .action-btn:hover { color: var(--pink-accent); }
 
+        .empty-tasks-hint {
+            text-align: center;
+            color: #bbb;
+            font-size: 0.9rem;
+            font-style: italic;
+            padding: 8px 0;
+        }
+
         /* --- MOBILE RESPONSIVE STYLES --- */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -356,6 +472,7 @@
             input[type="text"], select, .add-btn { width: 100%; }
             .pomodoro-controls button { padding: 10px 15px; }
             .task-text { font-size: 1rem; }
+            .auth-screen { margin: 60px auto; }
         }
     </style>
 </head>
@@ -383,7 +500,6 @@
           </g>
         </symbol>
 
-        <!-- Big watermelon layer, diagonal drift -->
         <pattern id="melonBack" patternUnits="userSpaceOnUse" width="150" height="150">
           <use href="#melonIcon" x="20" y="20" width="84" height="84" opacity="0.4"/>
           <animateTransform attributeName="patternTransform" type="translate"
@@ -395,7 +511,23 @@
       <rect width="100%" height="100%" fill="url(#melonBack)"/>
     </svg>
 
-    <div class="app-wrapper">
+    <!-- LOADING STATE (shown while Firebase determines auth status) -->
+    <div class="auth-loading" id="authLoading">🍉 Loading...</div>
+
+    <!-- AUTH SCREEN (login / sign up) -->
+    <div class="auth-screen" id="authScreen" style="display:none;">
+        <h1 id="authTitle">🍉 Welcome Back</h1>
+        <div class="auth-error" id="authError"></div>
+        <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+        <button class="auth-submit-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Log In</button>
+        <div class="auth-toggle">
+            <span id="authToggleText">Don't have an account?</span>
+            <a onclick="toggleAuthMode()" id="authToggleLink">Sign up</a>
+        </div>
+    </div>
+
+    <div class="app-wrapper" id="appWrapper">
         
         <!-- SIDEBAR CALENDAR -->
         <div class="sidebar">
@@ -414,6 +546,11 @@
 
         <!-- MAIN CONTAINER -->
         <div class="container">
+            <div class="account-bar">
+                <span class="account-email" id="accountEmail"></span>
+                <button class="logout-btn" onclick="handleLogout()">Log Out</button>
+            </div>
+
             <img src="watermelon-removebg-preview.png" alt="Cute Watermelon Mascot" class="mascot">
             
             <h1 id="mainTitle">🍉 Watermelon273 🍉</h1>
@@ -459,10 +596,156 @@
 
     </div>
 
-    <script>
+    <script type="module">
+        // --- FIREBASE SETUP ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            doc,
+            addDoc,
+            updateDoc,
+            deleteDoc,
+            onSnapshot,
+            query,
+            writeBatch
+        } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJH73MGfHld23zzOWjVp2wdK0IV1BvVGg",
+            authDomain: "watermelon-273.firebaseapp.com",
+            projectId: "watermelon-273",
+            storageBucket: "watermelon-273.firebasestorage.app",
+            messagingSenderId: "744401727991",
+            appId: "1:744401727991:web:985a9ccb41df61895cfef2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         // --- GLOBAL STATE ---
-        let tasks = JSON.parse(localStorage.getItem('watermelonTasks')) || [];
+        let tasks = [];
         let selectedDate = null; // Stores currently viewed date (YYYY-MM-DD), null means General view
+        let currentUser = null;
+        let unsubscribeTasks = null;
+        let isSignUpMode = false;
+
+        // --- AUTH UI ---
+        const authLoading = document.getElementById('authLoading');
+        const authScreen = document.getElementById('authScreen');
+        const appWrapper = document.getElementById('appWrapper');
+        const authError = document.getElementById('authError');
+        const authTitle = document.getElementById('authTitle');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authToggleText = document.getElementById('authToggleText');
+        const authToggleLink = document.getElementById('authToggleLink');
+        const accountEmail = document.getElementById('accountEmail');
+
+        window.toggleAuthMode = function () {
+            isSignUpMode = !isSignUpMode;
+            authError.innerText = '';
+            if (isSignUpMode) {
+                authTitle.innerText = '🍉 Join Watermelon273';
+                authSubmitBtn.innerText = 'Sign Up';
+                authToggleText.innerText = 'Already have an account?';
+                authToggleLink.innerText = 'Log in';
+            } else {
+                authTitle.innerText = '🍉 Welcome Back';
+                authSubmitBtn.innerText = 'Log In';
+                authToggleText.innerText = "Don't have an account?";
+                authToggleLink.innerText = 'Sign up';
+            }
+        };
+
+        window.handleAuthSubmit = async function () {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            authError.innerText = '';
+
+            if (!email || !password) {
+                authError.innerText = 'Please enter an email and password.';
+                return;
+            }
+
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.innerText = isSignUpMode ? 'Signing up...' : 'Logging in...';
+
+            try {
+                if (isSignUpMode) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                // onAuthStateChanged picks up from here
+            } catch (err) {
+                authError.innerText = friendlyAuthError(err.code);
+            } finally {
+                authSubmitBtn.disabled = false;
+                authSubmitBtn.innerText = isSignUpMode ? 'Sign Up' : 'Log In';
+            }
+        };
+
+        window.handleLogout = async function () {
+            await signOut(auth);
+        };
+
+        function friendlyAuthError(code) {
+            switch (code) {
+                case 'auth/email-already-in-use': return 'That email is already registered. Try logging in.';
+                case 'auth/invalid-email': return 'That email address looks invalid.';
+                case 'auth/weak-password': return 'Password should be at least 6 characters.';
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential': return 'Incorrect email or password.';
+                default: return "Something went wrong. Give it another try.";
+            }
+        }
+
+        // --- AUTH STATE LISTENER ---
+        onAuthStateChanged(auth, (user) => {
+            authLoading.style.display = 'none';
+
+            if (unsubscribeTasks) {
+                unsubscribeTasks();
+                unsubscribeTasks = null;
+            }
+
+            if (user) {
+                currentUser = user;
+                authScreen.style.display = 'none';
+                appWrapper.style.display = 'flex';
+                accountEmail.innerText = user.email;
+                subscribeToTasks(user.uid);
+            } else {
+                currentUser = null;
+                tasks = [];
+                appWrapper.style.display = 'none';
+                authScreen.style.display = 'block';
+                document.getElementById('authEmail').value = '';
+                document.getElementById('authPassword').value = '';
+            }
+        });
+
+        // --- FIRESTORE TASK SYNC ---
+        function subscribeToTasks(uid) {
+            const tasksRef = collection(db, 'users', uid, 'tasks');
+            unsubscribeTasks = onSnapshot(query(tasksRef), (snapshot) => {
+                tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderTasks();
+                renderCalendar();
+                updateProgress();
+            }, (err) => {
+                console.error('Task sync error:', err);
+            });
+        }
 
         // --- CALENDAR LOGIC ---
         let currentMonth = new Date().getMonth();
@@ -479,14 +762,12 @@
             const firstDay = new Date(currentYear, currentMonth, 1).getDay();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-            // Empty slots for previous month
             for (let i = 0; i < firstDay; i++) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'calendar-day empty';
                 grid.appendChild(emptyDiv);
             }
 
-            // Actual days
             for (let i = 1; i <= daysInMonth; i++) {
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'calendar-day';
@@ -494,12 +775,10 @@
                 
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                 
-                // Highlight the day if it is currently selected
                 if (dateStr === selectedDate) {
                     dayDiv.classList.add('active');
                 }
                 
-                // Clicking selects the date to view
                 dayDiv.onclick = () => selectDate(dateStr);
 
                 const dayTasks = tasks.filter(t => t.date === dateStr);
@@ -512,7 +791,7 @@
                         const dot = document.createElement('div');
                         dot.className = 'cal-task-dot';
                         if (t.completed) {
-                            dot.style.backgroundColor = 'var(--rind-green)'; // Green seed if completed
+                            dot.style.backgroundColor = 'var(--rind-green)';
                         }
                         dotsContainer.appendChild(dot);
                     });
@@ -523,7 +802,7 @@
             }
         }
 
-        function changeMonth(direction) {
+        window.changeMonth = function (direction) {
             currentMonth += direction;
             if (currentMonth > 11) {
                 currentMonth = 0;
@@ -533,25 +812,22 @@
                 currentYear--;
             }
             renderCalendar();
-        }
+        };
 
-        // Switch to Daily View
-        function selectDate(dateStr) {
+        window.selectDate = function (dateStr) {
             selectedDate = dateStr;
             renderCalendar();
             renderTasks();
             updateProgress();
-        }
+        };
 
-        // Switch back to General View
-        function clearDateSelection() {
+        window.clearDateSelection = function () {
             selectedDate = null;
             renderCalendar();
             renderTasks();
             updateProgress();
-        }
+        };
 
-        // Helper to format title text
         function formatFriendlyDate(dateStr) {
             const parts = dateStr.split('-');
             const d = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -569,7 +845,7 @@
             document.getElementById('timerDisplay').innerText = `${mins}:${secs}`;
         }
 
-        function toggleTimer() {
+        window.toggleTimer = function () {
             const btn = document.getElementById('timerBtn');
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -589,9 +865,9 @@
                 }, 1000);
                 btn.innerText = '⏸ Pause';
             }
-        }
+        };
 
-        function switchTimerMode() {
+        window.switchTimerMode = function () {
             isFocusMode = !isFocusMode;
             timerTime = isFocusMode ? 25 * 60 : 5 * 60;
             
@@ -611,63 +887,79 @@
             document.getElementById('timerBtn').innerText = '▶ Start';
             
             updateTimerDisplay();
-        }
+        };
 
-        // --- TASK LIST LOGIC ---
-        function saveAndRender() {
-            localStorage.setItem('watermelonTasks', JSON.stringify(tasks));
-            renderTasks();
-            renderCalendar(); 
-            updateProgress();
-        }
-
-        function addTask() {
+        // --- TASK LIST LOGIC (Firestore-backed) ---
+        window.addTask = async function () {
+            if (!currentUser) return;
             const input = document.getElementById('taskInput');
             const category = document.getElementById('categorySelect').value;
             const text = input.value.trim();
             
             if (text !== '') {
-                tasks.push({
-                    id: Date.now(),
-                    text: text,
-                    category: category,
-                    completed: false,
-                    inProgress: false,
-                    date: selectedDate // Automatically assigns to currently viewed date (or null)
-                });
                 input.value = '';
-                saveAndRender();
+                try {
+                    await addDoc(collection(db, 'users', currentUser.uid, 'tasks'), {
+                        text: text,
+                        category: category,
+                        completed: false,
+                        inProgress: false,
+                        date: selectedDate
+                    });
+                } catch (err) {
+                    console.error('Add task failed:', err);
+                    alert('Could not add task. Please try again.');
+                }
             }
-        }
+        };
 
-        function toggleTask(id) {
-            tasks = tasks.map(task => {
-                if (task.id === id) {
-                    return { ...task, completed: !task.completed, inProgress: false };
-                }
-                return task;
-            });
-            saveAndRender();
-        }
+        window.toggleTask = async function (id) {
+            if (!currentUser) return;
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid, 'tasks', id), {
+                    completed: !task.completed,
+                    inProgress: false
+                });
+            } catch (err) {
+                console.error('Toggle task failed:', err);
+            }
+        };
 
-        function toggleInProgress(id) {
-            tasks = tasks.map(task => {
-                if (task.id === id) {
-                    return { ...task, inProgress: !task.inProgress };
-                } else {
-                    return { ...task, inProgress: false };
-                }
-            });
-            saveAndRender();
-        }
+        window.toggleInProgress = async function (id) {
+            if (!currentUser) return;
+            const target = tasks.find(t => t.id === id);
+            if (!target) return;
 
-        function deleteTask(id) {
-            tasks = tasks.filter(task => task.id !== id);
-            saveAndRender();
-        }
+            try {
+                const batch = writeBatch(db);
+                const newValue = !target.inProgress;
+
+                tasks.forEach(t => {
+                    if (t.id === id) {
+                        batch.update(doc(db, 'users', currentUser.uid, 'tasks', t.id), { inProgress: newValue });
+                    } else if (t.inProgress) {
+                        batch.update(doc(db, 'users', currentUser.uid, 'tasks', t.id), { inProgress: false });
+                    }
+                });
+
+                await batch.commit();
+            } catch (err) {
+                console.error('Focus toggle failed:', err);
+            }
+        };
+
+        window.deleteTask = async function (id) {
+            if (!currentUser) return;
+            try {
+                await deleteDoc(doc(db, 'users', currentUser.uid, 'tasks', id));
+            } catch (err) {
+                console.error('Delete task failed:', err);
+            }
+        };
 
         function updateProgress() {
-            // Only calculate progress for the tasks currently visible on screen
             const visibleTasks = tasks.filter(t => t.date === selectedDate);
             const total = visibleTasks.length;
             const completed = visibleTasks.filter(t => t.completed).length;
@@ -681,10 +973,8 @@
         }
 
         function renderTasks() {
-            // 1. FILTER TASKS BASED ON SELECTED DATE
             const tasksToRender = tasks.filter(t => t.date === selectedDate);
 
-            // 2. UPDATE UI HEADERS
             const mainTitle = document.getElementById('mainTitle');
             const backBtnContainer = document.getElementById('backBtnContainer');
             
@@ -696,7 +986,6 @@
                 backBtnContainer.style.display = 'none';
             }
 
-            // 3. RENDER LISTS
             const lists = {
                 rind: document.getElementById('rindList'),
                 flesh: document.getElementById('fleshList'),
@@ -710,15 +999,15 @@
                 li.className = `task-item ${task.completed ? 'completed' : ''} ${task.inProgress ? 'in-progress' : ''}`;
                 
                 li.innerHTML = `
-                    <input type="checkbox" class="seed-checkbox" ${task.completed ? 'checked' : ''} onclick="toggleTask(${task.id})">
+                    <input type="checkbox" class="seed-checkbox" ${task.completed ? 'checked' : ''} onclick="toggleTask('${task.id}')">
                     <span class="task-text">
                         ${task.text}
                         <span class="focus-indicator">🍉 (focusing)</span>
                     </span>
-                    <button class="action-btn" onclick="toggleInProgress(${task.id})" title="Focus on this task">
+                    <button class="action-btn" onclick="toggleInProgress('${task.id}')" title="Focus on this task">
                         ${task.inProgress ? '⏸' : '▶'}
                     </button>
-                    <button class="action-btn" onclick="deleteTask(${task.id})" title="Delete task">×</button>
+                    <button class="action-btn" onclick="deleteTask('${task.id}')" title="Delete task">×</button>
                 `;
                 
                 lists[task.category].appendChild(li);
@@ -731,10 +1020,14 @@
             }
         });
 
-        // Initial setup
-        renderTasks();
+        document.getElementById('authPassword').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                handleAuthSubmit();
+            }
+        });
+
+        // Initial setup (calendar/timer UI can render before auth resolves)
         renderCalendar();
-        updateProgress();
         updateTimerDisplay();
     </script>
 </body>
