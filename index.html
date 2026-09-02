@@ -311,26 +311,17 @@
             font-weight: 800;
         }
 
-        .back-btn-container {
-            display: none;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .back-btn {
-            background-color: var(--light-pink);
-            color: var(--pink-accent);
-            border: 2px solid var(--pink-accent);
-            padding: 8px 15px;
-            border-radius: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .back-btn:hover {
-            background-color: var(--pink-accent);
-            color: var(--white);
+        .today-badge {
+            display: inline-block;
+            background-color: var(--rind-light);
+            color: #1e7033;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+            letter-spacing: 0.5px;
         }
 
         /* --- WATERMELON POMODORO TIMER --- */
@@ -555,11 +546,6 @@
             
             <h1 id="mainTitle">🍉 Watermelon273 🍉</h1>
 
-            <!-- BACK TO GENERAL BUTTON -->
-            <div class="back-btn-container" id="backBtnContainer">
-                <button class="back-btn" onclick="clearDateSelection()">🔙 View General Tasks</button>
-            </div>
-
             <!-- POMODORO TIMER -->
             <div class="pomodoro-container" id="pomodoroContainer">
                 <p class="mode-text" id="timerMode">Focus Time</p>
@@ -632,8 +618,16 @@
         const db = getFirestore(app);
 
         // --- GLOBAL STATE ---
+        function formatDateStr(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+        function todayDateStr() {
+            const now = new Date();
+            return formatDateStr(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+
         let tasks = [];
-        let selectedDate = null; // Stores currently viewed date (YYYY-MM-DD), null means General view
+        let selectedDate = todayDateStr(); // Always a real date now — no more "General" view
         let currentUser = null;
         let unsubscribeTasks = null;
         let isSignUpMode = false;
@@ -821,13 +815,6 @@
             updateProgress();
         };
 
-        window.clearDateSelection = function () {
-            selectedDate = null;
-            renderCalendar();
-            renderTasks();
-            updateProgress();
-        };
-
         function formatFriendlyDate(dateStr) {
             const parts = dateStr.split('-');
             const d = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -976,15 +963,8 @@
             const tasksToRender = tasks.filter(t => t.date === selectedDate);
 
             const mainTitle = document.getElementById('mainTitle');
-            const backBtnContainer = document.getElementById('backBtnContainer');
-            
-            if (selectedDate) {
-                mainTitle.innerText = `🍉 Tasks for ${formatFriendlyDate(selectedDate)} 🍉`;
-                backBtnContainer.style.display = 'block';
-            } else {
-                mainTitle.innerText = `🍉 Watermelon273 🍉`;
-                backBtnContainer.style.display = 'none';
-            }
+            const isToday = selectedDate === todayDateStr();
+            mainTitle.innerHTML = `🍉 ${formatFriendlyDate(selectedDate)} 🍉${isToday ? '<span class="today-badge">Today</span>' : ''}`;
 
             const lists = {
                 rind: document.getElementById('rindList'),
