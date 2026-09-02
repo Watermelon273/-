@@ -1,84 +1,741 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Watermelon273</title>
-<style>
-  :root {
-    --mint-bg: #A3BEFD;
-    --pink-accent: #ff8fa3;
-    --rind-green: #2b9348;
-    --rind-light: #eaffea;
-    --seed-black: #2c2c2c;
-  }
-  html, body {
-    margin: 0;
-    height: 100%;
-    background-color: var(--mint-bg);
-    font-family: 'Nunito', sans-serif;
-    overflow: hidden;
-  }
-  /* The animated background sits fixed behind everything */
-  .watermelon-bg {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    pointer-events: none;
-  }
-  .demo-note {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    text-align: center;
-    color: #1e4620;
-    font-weight: 800;
-    font-size: 1.4rem;
-    text-shadow: 0 2px 0 rgba(255,255,255,0.5);
-    padding: 20px;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watermelon273</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap');
+
+        :root {
+            --mint-bg: #A3BEFD; 
+            --pink-accent: #ff8fa3; 
+            --rind-green: #2b9348; 
+            --rind-light: #eaffea; 
+            --seed-black: #2c2c2c;
+            --white: #ffffff;
+            --light-pink: #fff0f3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--mint-bg);
+            color: var(--seed-black);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated pixel-art watermelon background, fixed behind everything */
+        .watermelon-bg {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .app-wrapper {
+            display: flex;
+            gap: 25px;
+            max-width: 950px;
+            width: 100%;
+            align-items: flex-start;
+            margin-top: 60px; 
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- SIDEBAR CALENDAR STYLES --- */
+        .sidebar {
+            background-color: var(--white);
+            width: 320px;
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(43, 147, 72, 0.2);
+            border: 3px solid var(--rind-green);
+            flex-shrink: 0;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-header button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--rind-green);
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: transform 0.2s;
+        }
+        
+        .calendar-header button:hover {
+            transform: scale(1.2);
+            color: var(--pink-accent);
+        }
+
+        .calendar-header h3 {
+            margin: 0;
+            color: var(--pink-accent);
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .calendar-days-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 800;
+            color: var(--rind-green);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 5px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: background-color 0.2s, border 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .calendar-day:hover {
+            border-color: var(--pink-accent);
+            background-color: var(--light-pink);
+        }
+
+        /* Highlight the day currently being viewed */
+        .calendar-day.active {
+            background-color: var(--pink-accent);
+            color: var(--white);
+            border-color: var(--rind-green);
+            transform: scale(1.05);
+        }
+
+        .calendar-day.empty {
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .cal-dots-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            justify-content: center;
+            padding: 0 4px;
+            margin-top: 4px;
+        }
+
+        .cal-task-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--seed-black);
+            border-radius: 50% 50% 50% 0; 
+            transform: rotate(45deg);
+        }
+
+        /* Make dots white if they are on an active pink background */
+        .calendar-day.active .cal-task-dot {
+            background-color: var(--white);
+        }
+
+        /* --- MAIN CONTAINER STYLES --- */
+        .container {
+            background-color: var(--white);
+            width: 100%;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(43, 147, 72, 0.2);
+            border: 3px solid var(--pink-accent);
+            position: relative;
+        }
+
+        .mascot {
+            width: 80px;
+            display: block;
+            margin: -70px auto 10px auto; 
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15)); 
+            animation: float 3s ease-in-out infinite;
+            image-rendering: pixelated; 
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--pink-accent);
+            margin-top: 0;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            font-weight: 800;
+        }
+
+        /* Back to General Button */
+        .back-btn-container {
+            display: none;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .back-btn {
+            background-color: var(--light-pink);
+            color: var(--pink-accent);
+            border: 2px solid var(--pink-accent);
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: var(--pink-accent);
+            color: var(--white);
+        }
+
+        /* --- WATERMELON POMODORO TIMER --- */
+        .pomodoro-container {
+            background-color: var(--pink-accent);
+            border: 4px solid var(--rind-green);
+            border-bottom-width: 14px;
+            border-radius: 150px 150px 30px 30px; 
+            padding: 45px 20px 25px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            transition: background-color 0.4s, border-color 0.4s;
+            box-shadow: inset 0 -8px 0 0 var(--rind-light), 0 8px 15px rgba(0,0,0,0.05);
+            background-image: 
+                radial-gradient(ellipse 6px 9px at 15% 40%, var(--seed-black) 40%, transparent 50%), 
+                radial-gradient(ellipse 6px 9px at 85% 37%, var(--seed-black) 40%, transparent 50%), 
+                radial-gradient(ellipse 6px 9px at 20% 65%, var(--seed-black) 40%, transparent 50%), 
+                radial-gradient(ellipse 6px 9px at 80% 65%, var(--seed-black) 40%, transparent 50%)
+        }
+
+        .pomodoro-container.break-mode {
+            background-color: var(--rind-light);
+            border-color: var(--rind-green);
+            background-image: none;
+            box-shadow: inset 0 -8px 0 0 var(--white), 0 8px 15px rgba(0,0,0,0.05);
+        }
+
+        .timer-display {
+            font-size: 4.5rem;
+            font-weight: 800;
+            color: var(--white);
+            margin: 5px 0;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.15);
+            letter-spacing: 2px;
+        }
+
+        .break-mode .timer-display {
+            color: var(--rind-green);
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+        }
+
+        .mode-text {
+            font-weight: 800;
+            color: var(--white);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 1rem;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.15);
+        }
+
+        .break-mode .mode-text { color: var(--rind-green); text-shadow: none; }
+
+        .pomodoro-controls { margin-top: 15px; display: flex; justify-content: center; gap: 10px; }
+
+        .pomodoro-controls button {
+            background-color: var(--seed-black);
+            color: var(--white);
+            border: none;
+            padding: 10px 22px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.4);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .pomodoro-controls button:active { transform: translateY(4px); box-shadow: 0 0px 0px rgba(0,0,0,0.4); }
+        .break-mode .pomodoro-controls button { background-color: var(--rind-green); box-shadow: 0 4px 0px rgba(23, 78, 38, 0.4); }
+        .break-mode .pomodoro-controls button:active { box-shadow: 0 0px 0px rgba(23, 78, 38, 0.4); }
+
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            height: 25px;
+            overflow: hidden;
+            border: 2px solid var(--rind-green);
+        }
+
+        .progress-bar { height: 100%; background-color: var(--pink-accent); width: 0%; transition: width 0.4s ease; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] {
+            flex: 1; padding: 12px 15px; border: 2px solid var(--mint-bg);
+            border-radius: 15px; font-size: 1rem; font-family: inherit; outline: none; transition: border-color 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--rind-green); }
+        select { padding: 12px; border: 2px solid var(--mint-bg); border-radius: 15px; font-family: inherit; outline: none; background: var(--white); }
+
+        .add-btn {
+            background-color: var(--rind-green); color: white; border: none; padding: 12px 20px;
+            border-radius: 15px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: transform 0.1s, background-color 0.3s;
+        }
+        .add-btn:active { transform: scale(0.95); }
+        .add-btn:hover { background-color: #1e7033; }
+
+        .category-title { color: var(--rind-green); border-bottom: 2px dashed var(--mint-bg); padding-bottom: 5px; margin-top: 25px; }
+        .task-list { list-style: none; padding: 0; margin: 0; }
+        .task-item { display: flex; align-items: center; padding: 12px 10px; border-bottom: 1px solid #f0f0f0; transition: all 0.3s ease; border-radius: 10px; flex-wrap: wrap; }
+        .task-item.in-progress { background-color: var(--light-pink); border-left: 4px solid var(--pink-accent); transform: scale(1.02); box-shadow: 0 4px 10px rgba(255, 143, 163, 0.2); }
+        .task-item.completed span.task-text { text-decoration: line-through; color: #aaa; }
+        .task-item.completed.in-progress { background-color: transparent; border-left: none; transform: scale(1); box-shadow: none; }
+
+        .seed-checkbox {
+            appearance: none; -webkit-appearance: none; width: 20px; height: 20px;
+            background-color: var(--seed-black); border-radius: 50% 50% 50% 0; transform: rotate(45deg); margin-right: 15px; cursor: pointer; transition: background-color 0.3s; flex-shrink: 0;
+        }
+        .seed-checkbox:checked { background-color: var(--pink-accent); }
+        .task-text { flex: 1; font-size: 1.1rem; min-width: 150px; }
+        .focus-indicator { font-size: 0.85rem; color: var(--pink-accent); font-style: italic; margin-left: 8px; opacity: 0; transition: opacity 0.3s; font-weight: bold; }
+        .task-item.in-progress .focus-indicator { opacity: 1; }
+        .action-btn { background-color: transparent; color: #999; padding: 5px 8px; font-size: 1.1rem; margin-left: 5px; border: none; cursor: pointer; }
+        .action-btn:hover { color: var(--pink-accent); }
+
+        /* --- MOBILE RESPONSIVE STYLES --- */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .app-wrapper { flex-direction: column; align-items: center; gap: 15px; }
+            .sidebar { width: 100%; max-width: 540px; }
+            .container { padding: 20px 15px; border-radius: 20px; margin-top: 40px; }
+            .mascot { width: 70px; margin-top: -55px; }
+            h1 { font-size: 1.8rem; }
+            .timer-display { font-size: 3.5rem; }
+            .pomodoro-container { border-radius: 120px 120px 25px 25px; padding: 35px 15px 20px 15px; }
+            .input-group { flex-direction: column; }
+            input[type="text"], select, .add-btn { width: 100%; }
+            .pomodoro-controls button { padding: 10px 15px; }
+            .task-text { font-size: 1rem; }
+        }
+    </style>
 </head>
 <body>
 
-  <svg class="watermelon-bg" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <symbol id="melonIcon" viewBox="0 0 84 84">
-        <g shape-rendering="crispEdges">
-            <rect x="36" y="0" width="6" height="6" fill="var(--rind-green)"/><rect x="42" y="0" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="18" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="30" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="36" y="6" width="6" height="6" fill="var(--rind-light)"/><rect x="42" y="6" width="6" height="6" fill="var(--rind-light)"/><rect x="48" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="54" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="60" y="6" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="12" y="12" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="12" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="12" width="6" height="6" fill="var(--rind-light)"/><rect x="30" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="12" width="6" height="6" fill="var(--rind-light)"/><rect x="60" y="12" width="6" height="6" fill="var(--rind-green)"/><rect x="66" y="12" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="6" y="18" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="18" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="18" width="6" height="6" fill="var(--rind-green)"/><rect x="72" y="18" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="6" y="24" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="24" width="6" height="6" fill="var(--rind-light)"/><rect x="18" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="24" width="6" height="6" fill="var(--seed-black)"/><rect x="42" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="24" width="6" height="6" fill="var(--rind-light)"/><rect x="72" y="24" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="6" y="30" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="30" width="6" height="6" fill="var(--seed-black)"/><rect x="30" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="30" width="6" height="6" fill="var(--seed-black)"/><rect x="60" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="30" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="0" y="36" width="6" height="6" fill="var(--rind-green)"/><rect x="6" y="36" width="6" height="6" fill="var(--rind-light)"/><rect x="12" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="36" width="6" height="6" fill="var(--rind-light)"/><rect x="78" y="36" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="0" y="42" width="6" height="6" fill="var(--rind-green)"/><rect x="6" y="42" width="6" height="6" fill="var(--rind-light)"/><rect x="12" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="42" width="6" height="6" fill="var(--seed-black)"/><rect x="24" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="42" width="6" height="6" fill="var(--rind-light)"/><rect x="78" y="42" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="6" y="48" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="48" width="6" height="6" fill="var(--seed-black)"/><rect x="66" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="48" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="6" y="54" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="54" width="6" height="6" fill="var(--rind-light)"/><rect x="18" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="54" width="6" height="6" fill="var(--seed-black)"/><rect x="30" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="54" width="6" height="6" fill="var(--seed-black)"/><rect x="48" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="54" width="6" height="6" fill="var(--rind-light)"/><rect x="72" y="54" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="6" y="60" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="60" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="60" width="6" height="6" fill="var(--rind-green)"/><rect x="72" y="60" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="12" y="66" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="66" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="66" width="6" height="6" fill="var(--rind-light)"/><rect x="30" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="66" width="6" height="6" fill="var(--rind-light)"/><rect x="60" y="66" width="6" height="6" fill="var(--rind-green)"/><rect x="66" y="66" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="18" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="30" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="36" y="72" width="6" height="6" fill="var(--rind-light)"/><rect x="42" y="72" width="6" height="6" fill="var(--rind-light)"/><rect x="48" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="54" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="60" y="72" width="6" height="6" fill="var(--rind-green)"/>
-            <rect x="36" y="78" width="6" height="6" fill="var(--rind-green)"/><rect x="42" y="78" width="6" height="6" fill="var(--rind-green)"/>
-        </g>
-      </symbol>
+    <!-- ANIMATED PIXEL-ART WATERMELON BACKGROUND -->
+    <svg class="watermelon-bg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <symbol id="melonIcon" viewBox="0 0 84 84">
+          <g shape-rendering="crispEdges">
+              <rect x="36" y="0" width="6" height="6" fill="var(--rind-green)"/><rect x="42" y="0" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="18" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="30" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="36" y="6" width="6" height="6" fill="var(--rind-light)"/><rect x="42" y="6" width="6" height="6" fill="var(--rind-light)"/><rect x="48" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="54" y="6" width="6" height="6" fill="var(--rind-green)"/><rect x="60" y="6" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="12" y="12" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="12" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="12" width="6" height="6" fill="var(--rind-light)"/><rect x="30" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="12" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="12" width="6" height="6" fill="var(--rind-light)"/><rect x="60" y="12" width="6" height="6" fill="var(--rind-green)"/><rect x="66" y="12" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="6" y="18" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="18" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="18" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="18" width="6" height="6" fill="var(--rind-green)"/><rect x="72" y="18" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="6" y="24" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="24" width="6" height="6" fill="var(--rind-light)"/><rect x="18" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="24" width="6" height="6" fill="var(--seed-black)"/><rect x="42" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="24" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="24" width="6" height="6" fill="var(--rind-light)"/><rect x="72" y="24" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="6" y="30" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="30" width="6" height="6" fill="var(--seed-black)"/><rect x="30" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="30" width="6" height="6" fill="var(--seed-black)"/><rect x="60" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="30" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="30" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="0" y="36" width="6" height="6" fill="var(--rind-green)"/><rect x="6" y="36" width="6" height="6" fill="var(--rind-light)"/><rect x="12" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="36" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="36" width="6" height="6" fill="var(--rind-light)"/><rect x="78" y="36" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="0" y="42" width="6" height="6" fill="var(--rind-green)"/><rect x="6" y="42" width="6" height="6" fill="var(--rind-light)"/><rect x="12" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="42" width="6" height="6" fill="var(--seed-black)"/><rect x="24" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="42" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="42" width="6" height="6" fill="var(--rind-light)"/><rect x="78" y="42" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="6" y="48" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="18" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="48" width="6" height="6" fill="var(--seed-black)"/><rect x="66" y="48" width="6" height="6" fill="var(--pink-accent)"/><rect x="72" y="48" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="6" y="54" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="54" width="6" height="6" fill="var(--rind-light)"/><rect x="18" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="54" width="6" height="6" fill="var(--seed-black)"/><rect x="30" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="54" width="6" height="6" fill="var(--seed-black)"/><rect x="48" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="54" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="54" width="6" height="6" fill="var(--rind-light)"/><rect x="72" y="54" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="6" y="60" width="6" height="6" fill="var(--rind-green)"/><rect x="12" y="60" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="24" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="30" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="60" y="60" width="6" height="6" fill="var(--pink-accent)"/><rect x="66" y="60" width="6" height="6" fill="var(--rind-green)"/><rect x="72" y="60" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="12" y="66" width="6" height="6" fill="var(--rind-green)"/><rect x="18" y="66" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="66" width="6" height="6" fill="var(--rind-light)"/><rect x="30" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="36" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="42" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="48" y="66" width="6" height="6" fill="var(--pink-accent)"/><rect x="54" y="66" width="6" height="6" fill="var(--rind-light)"/><rect x="60" y="66" width="6" height="6" fill="var(--rind-green)"/><rect x="66" y="66" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="18" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="24" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="30" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="36" y="72" width="6" height="6" fill="var(--rind-light)"/><rect x="42" y="72" width="6" height="6" fill="var(--rind-light)"/><rect x="48" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="54" y="72" width="6" height="6" fill="var(--rind-green)"/><rect x="60" y="72" width="6" height="6" fill="var(--rind-green)"/>
+              <rect x="36" y="78" width="6" height="6" fill="var(--rind-green)"/><rect x="42" y="78" width="6" height="6" fill="var(--rind-green)"/>
+          </g>
+        </symbol>
 
-      <!-- Big watermelon layer, slow diagonal drift -->
-      <pattern id="melonBack" patternUnits="userSpaceOnUse" width="150" height="150">
-        <use href="#melonIcon" x="20" y="20" width="84" height="84" opacity="0.4"/>
-        <animateTransform attributeName="patternTransform" type="translate"
-          values="0 0; 150 150" dur="34s" repeatCount="indefinite"/>
-      </pattern>
-    </defs>
+        <!-- Big watermelon layer, diagonal drift -->
+        <pattern id="melonBack" patternUnits="userSpaceOnUse" width="150" height="150">
+          <use href="#melonIcon" x="20" y="20" width="84" height="84" opacity="0.4"/>
+          <animateTransform attributeName="patternTransform" type="translate"
+            values="0 0; 150 150" dur="22s" repeatCount="indefinite"/>
+        </pattern>
+      </defs>
 
-    <rect width="100%" height="100%" fill="var(--mint-bg)"/>
-    <rect width="100%" height="100%" fill="url(#melonBack)"/>
-  </svg>
+      <rect width="100%" height="100%" fill="var(--mint-bg)"/>
+      <rect width="100%" height="100%" fill="url(#melonBack)"/>
+    </svg>
 
-  <div class="demo-note"></div>
+    <div class="app-wrapper">
+        
+        <!-- SIDEBAR CALENDAR -->
+        <div class="sidebar">
+            <div class="calendar-header">
+                <button onclick="changeMonth(-1)">&#10094;</button>
+                <h3 id="monthYearDisplay">Month Year</h3>
+                <button onclick="changeMonth(1)">&#10095;</button>
+            </div>
+            <div class="calendar-days-header">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div id="calendarGrid" class="calendar-grid">
+                <!-- Javascript will populate days here -->
+            </div>
+        </div>
 
+        <!-- MAIN CONTAINER -->
+        <div class="container">
+            <img src="watermelon-removebg-preview.png" alt="Cute Watermelon Mascot" class="mascot">
+            
+            <h1 id="mainTitle">🍉 Watermelon273 🍉</h1>
+
+            <!-- BACK TO GENERAL BUTTON -->
+            <div class="back-btn-container" id="backBtnContainer">
+                <button class="back-btn" onclick="clearDateSelection()">🔙 View General Tasks</button>
+            </div>
+
+            <!-- POMODORO TIMER -->
+            <div class="pomodoro-container" id="pomodoroContainer">
+                <p class="mode-text" id="timerMode">Focus Time</p>
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="pomodoro-controls">
+                    <button id="timerBtn" onclick="toggleTimer()">▶ Start</button>
+                    <button onclick="switchTimerMode()">🔄 Break</button>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="What's next, champ?">
+                <select id="categorySelect">
+                    <option value="rind">The Rind (Tough)</option>
+                    <option value="flesh">The Flesh (Core)</option>
+                    <option value="seeds">The Seeds (Quick)</option>
+                </select>
+                <button class="add-btn" onclick="addTask()">Add</button>
+            </div>
+
+            <h3 class="category-title">The Rind (Tough Tasks)</h3>
+            <ul class="task-list" id="rindList"></ul>
+
+            <h3 class="category-title">The Flesh (Core Tasks)</h3>
+            <ul class="task-list" id="fleshList"></ul>
+
+            <h3 class="category-title">The Seeds (Quick Wins)</h3>
+            <ul class="task-list" id="seedsList"></ul>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GLOBAL STATE ---
+        let tasks = JSON.parse(localStorage.getItem('watermelonTasks')) || [];
+        let selectedDate = null; // Stores currently viewed date (YYYY-MM-DD), null means General view
+
+        // --- CALENDAR LOGIC ---
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthYearDisplay = document.getElementById('monthYearDisplay');
+            grid.innerHTML = '';
+            
+            monthYearDisplay.innerText = `${monthNames[currentMonth]} ${currentYear}`;
+
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            // Empty slots for previous month
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'calendar-day empty';
+                grid.appendChild(emptyDiv);
+            }
+
+            // Actual days
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                dayDiv.innerText = i;
+                
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                
+                // Highlight the day if it is currently selected
+                if (dateStr === selectedDate) {
+                    dayDiv.classList.add('active');
+                }
+                
+                // Clicking selects the date to view
+                dayDiv.onclick = () => selectDate(dateStr);
+
+                const dayTasks = tasks.filter(t => t.date === dateStr);
+                
+                if (dayTasks.length > 0) {
+                    const dotsContainer = document.createElement('div');
+                    dotsContainer.className = 'cal-dots-container';
+                    
+                    dayTasks.forEach(t => {
+                        const dot = document.createElement('div');
+                        dot.className = 'cal-task-dot';
+                        if (t.completed) {
+                            dot.style.backgroundColor = 'var(--rind-green)'; // Green seed if completed
+                        }
+                        dotsContainer.appendChild(dot);
+                    });
+                    dayDiv.appendChild(dotsContainer);
+                }
+
+                grid.appendChild(dayDiv);
+            }
+        }
+
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        }
+
+        // Switch to Daily View
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            renderCalendar();
+            renderTasks();
+            updateProgress();
+        }
+
+        // Switch back to General View
+        function clearDateSelection() {
+            selectedDate = null;
+            renderCalendar();
+            renderTasks();
+            updateProgress();
+        }
+
+        // Helper to format title text
+        function formatFriendlyDate(dateStr) {
+            const parts = dateStr.split('-');
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+        }
+
+        // --- POMODORO LOGIC ---
+        let timerTime = 25 * 60; 
+        let timerInterval = null;
+        let isFocusMode = true;
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerTime / 60).toString().padStart(2, '0');
+            const secs = (timerTime % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${mins}:${secs}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.innerText = '▶ Start';
+            } else {
+                timerInterval = setInterval(() => {
+                    if (timerTime > 0) {
+                        timerTime--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        alert(isFocusMode ? "Time for a break! 🍉" : "Break is over, back to it! 🍉");
+                        switchTimerMode();
+                    }
+                }, 1000);
+                btn.innerText = '⏸ Pause';
+            }
+        }
+
+        function switchTimerMode() {
+            isFocusMode = !isFocusMode;
+            timerTime = isFocusMode ? 25 * 60 : 5 * 60;
+            
+            const container = document.getElementById('pomodoroContainer');
+            const modeText = document.getElementById('timerMode');
+            
+            if (isFocusMode) {
+                container.classList.remove('break-mode');
+                modeText.innerText = 'Focus Time';
+            } else {
+                container.classList.add('break-mode');
+                modeText.innerText = 'Break Time';
+            }
+            
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById('timerBtn').innerText = '▶ Start';
+            
+            updateTimerDisplay();
+        }
+
+        // --- TASK LIST LOGIC ---
+        function saveAndRender() {
+            localStorage.setItem('watermelonTasks', JSON.stringify(tasks));
+            renderTasks();
+            renderCalendar(); 
+            updateProgress();
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const category = document.getElementById('categorySelect').value;
+            const text = input.value.trim();
+            
+            if (text !== '') {
+                tasks.push({
+                    id: Date.now(),
+                    text: text,
+                    category: category,
+                    completed: false,
+                    inProgress: false,
+                    date: selectedDate // Automatically assigns to currently viewed date (or null)
+                });
+                input.value = '';
+                saveAndRender();
+            }
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    return { ...task, completed: !task.completed, inProgress: false };
+                }
+                return task;
+            });
+            saveAndRender();
+        }
+
+        function toggleInProgress(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    return { ...task, inProgress: !task.inProgress };
+                } else {
+                    return { ...task, inProgress: false };
+                }
+            });
+            saveAndRender();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveAndRender();
+        }
+
+        function updateProgress() {
+            // Only calculate progress for the tasks currently visible on screen
+            const visibleTasks = tasks.filter(t => t.date === selectedDate);
+            const total = visibleTasks.length;
+            const completed = visibleTasks.filter(t => t.completed).length;
+            const percentage = total === 0 ? 0 : (completed / total) * 100;
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
+            
+            if (percentage === 100 && total > 0) {
+                setTimeout(() => alert("You're one in a melon! All tasks done! 🍉"), 300);
+            }
+        }
+
+        function renderTasks() {
+            // 1. FILTER TASKS BASED ON SELECTED DATE
+            const tasksToRender = tasks.filter(t => t.date === selectedDate);
+
+            // 2. UPDATE UI HEADERS
+            const mainTitle = document.getElementById('mainTitle');
+            const backBtnContainer = document.getElementById('backBtnContainer');
+            
+            if (selectedDate) {
+                mainTitle.innerText = `🍉 Tasks for ${formatFriendlyDate(selectedDate)} 🍉`;
+                backBtnContainer.style.display = 'block';
+            } else {
+                mainTitle.innerText = `🍉 Watermelon273 🍉`;
+                backBtnContainer.style.display = 'none';
+            }
+
+            // 3. RENDER LISTS
+            const lists = {
+                rind: document.getElementById('rindList'),
+                flesh: document.getElementById('fleshList'),
+                seeds: document.getElementById('seedsList')
+            };
+
+            Object.values(lists).forEach(list => list.innerHTML = '');
+
+            tasksToRender.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item ${task.completed ? 'completed' : ''} ${task.inProgress ? 'in-progress' : ''}`;
+                
+                li.innerHTML = `
+                    <input type="checkbox" class="seed-checkbox" ${task.completed ? 'checked' : ''} onclick="toggleTask(${task.id})">
+                    <span class="task-text">
+                        ${task.text}
+                        <span class="focus-indicator">🍉 (focusing)</span>
+                    </span>
+                    <button class="action-btn" onclick="toggleInProgress(${task.id})" title="Focus on this task">
+                        ${task.inProgress ? '⏸' : '▶'}
+                    </button>
+                    <button class="action-btn" onclick="deleteTask(${task.id})" title="Delete task">×</button>
+                `;
+                
+                lists[task.category].appendChild(li);
+            });
+        }
+
+        document.getElementById('taskInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Initial setup
+        renderTasks();
+        renderCalendar();
+        updateProgress();
+        updateTimerDisplay();
+    </script>
 </body>
 </html>
